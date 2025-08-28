@@ -1,4 +1,4 @@
-# app.py (updated with post-LLM enrichment for time_range, limit, order_by)
+# app.py (final with bigger highlighted NLQ box + suggestion buttons)
 from __future__ import annotations
 import streamlit as st
 
@@ -34,18 +34,71 @@ def main() -> None:
     filters = sidebar_filters(data)
     df = apply_filters(data, filters)
 
-    # --- NLQ UI (no sidebar, still uses LLM under the hood) ---
+    # --- NLQ UI (bigger + highlighted) ---
     st.divider()
     st.subheader("🔎 Ask with natural language")
 
+    # One-time CSS to style the NLQ area
+    st.markdown(
+        """
+<style>
+/* Wrap card around the text area */
+div[data-testid="stTextArea"]{
+  border: 2px solid #f59e0b;      /* amber-500 */
+  background: #fff8e1;            /* amber-50 */
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+/* Make the textarea text larger and comfier */
+div[data-testid="stTextArea"] textarea {
+  font-size: 18px !important;
+  line-height: 1.5 !important;
+  padding: 12px !important;
+}
+
+/* Tweak the label */
+div[data-testid="stTextArea"] label p {
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+  margin-bottom: 6px !important;
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+    # Support pre-filling the input from suggestion buttons
     if "nl_prefill" in st.session_state:
         st.session_state["nl_prompt"] = st.session_state.pop("nl_prefill")
 
-    q = st.text_input(
-        "Ask about your shipments (e.g., 'top 5 suppliers by spend', 'show delayed air shipments from CN last 30 days').",
+    # Multiline text area (bigger than text_input)
+    q = st.text_area(
+        "Ask about your shipments",
         key="nl_prompt",
-        placeholder="Try: top 5 suppliers by spend",
+        placeholder="Try: Show risky shipments of Foxtrot Fasteners for lane US → IN with mode Ocean",
+        height=120,
     )
+
+    # --- Suggestion Box (click to prefill) ---
+    st.caption("💡 Suggestions (click to prefill)")
+    suggestions = [
+        "Show risky shipments of Delta Textiles",
+        "Show risky shipments for lane SG → IN with mode Road",
+        "Show risky shipments of Echo Electronics for lane VN → IN with mode Ocean",
+        "Show risky shipments of Crescent Metals for lane CN → IN with mode Ocean",
+    ]
+
+    # Two-per-row layout so buttons don’t get cramped
+    for i in range(0, len(suggestions), 2):
+        cols = st.columns(2)
+        for j in range(2):
+            idx = i + j
+            if idx < len(suggestions):
+                if cols[j].button(suggestions[idx], key=f"suggestion_{idx}"):
+                    st.session_state["nl_prefill"] = suggestions[idx]
+                    st.rerun()
 
     # Hidden LLM settings (no sidebar)
     use_llm = True  # keep LLM enabled but invisible
@@ -100,7 +153,6 @@ def main() -> None:
 
                 # If user mentions "risky shipments" and filters lack status, add it
                 if "risky" in ql and "status" not in (raw_plan["filters"] or {}):
-                    # Use your dataset's appropriate risky label if different
                     raw_plan["filters"]["status"] = "Delayed"
                 # ---------- End enrichment ----------
 
@@ -117,8 +169,8 @@ def main() -> None:
                 st.warning("Add HF_TOKEN to .streamlit/secrets.toml (or ENV) to enable the LLM parser.")
             df_for_viz, note = apply_prompt_filters(data, df, q)
 
-    if note:
-        st.caption(f"🧠 {note}")
+    # if note:
+    #     st.caption(f"🧠 {note}")
 
     # KPIs
     st.divider()
