@@ -1,0 +1,45 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.sqlite3
+*.log
+
+# ---- Virtual Environment ----
+venv/
+ENV/
+env/
+.venv/
+
+# ---- Jupyter / IPython ----
+.ipynb_checkpoints/
+
+# ---- OS / Editor Junk ----
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ---- Streamlit ----
+.streamlit/
+
+# ---- Secrets ----
+app_secrets.py
+*.env
+
+# ---- HuggingFace Cache (if used) ----
+.hf_cache/
+.hf_check/
+
+# ---- Build / Distribution ----
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ---- Testing ----
+.coverage
+.pytest_cache/
+htmlcov/
